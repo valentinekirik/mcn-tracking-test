@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>MCE Marketing Cloud Next - Web Tracking Isolation Test</title>
+
+<!-- ============================================================
+     BLOCK 1 - Salesforce Interactions SDK configuration
+     Copied verbatim from the live mce.eu implementation.
+     ============================================================ -->
+<script>
+  window.c360a = window.c360a || {};
+  window.c360a.config = window.c360a.config || {};
+  window.c360a.config.consentBanner = false;
+</script>
+
+<!-- ============================================================
+     BLOCK 2 - Salesforce Interactions SDK beacon
+     Same tenant path and same wtcp_id as the live mce.eu pages.
+     ============================================================ -->
+<script
+  src="https://cdn.c360a.salesforce.com/beacon/c360a/53edf067-5162-4cbf-ade7-0559da431d6d/scripts/c360a.min.js?wtcp_id=1NDQx00000007j3OAA"
+  onload="mark('beacon', true)"
+  onerror="mark('beacon', false)"></script>
+
+<style>
+  :root { --navy:#1c2340; --primary:#5068e0; --ok:#1a7f4b; --bad:#b3261e; --wait:#8a6d00; }
+  body { font-family:'Open Sans',Arial,Helvetica,sans-serif; margin:0; color:var(--navy);
+         background:#f5f6fe; line-height:1.45; }
+  .wrap { max-width:860px; margin:0 auto; padding:28px 20px 60px; }
+  h1 { font-size:24px; margin:0 0 4px; }
+  h2 { font-size:15px; text-transform:uppercase; letter-spacing:.04em;
+       margin:28px 0 8px; border-bottom:2px solid var(--primary); padding-bottom:5px; }
+  p  { font-size:14px; }
+  .sub { color:#5a6076; font-size:13px; margin:0 0 20px; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th { background:var(--navy); color:#fff; text-align:left; padding:8px 10px; }
+  td { padding:8px 10px; border-bottom:1px solid #e3e6f5; vertical-align:top; }
+  tr:nth-child(even) td { background:#fafbff; }
+  code, .mono { font-family:'Roboto Mono',Consolas,Menlo,monospace; font-size:12px;
+                word-break:break-all; }
+  .pill { display:inline-block; padding:2px 9px; border-radius:11px; font-size:11px;
+          font-weight:700; font-family:'Roboto Mono',monospace; }
+  .p-ok   { background:#dff3e6; color:var(--ok); }
+  .p-bad  { background:#fbe3e1; color:var(--bad); }
+  .p-wait { background:#fdf3d4; color:var(--wait); }
+  button { background:var(--primary); color:#fff; border:0; border-radius:5px;
+           padding:11px 18px; font-size:14px; cursor:pointer; margin:0 8px 8px 0; }
+  button:hover { background:#3f55c4; }
+  a.tl { display:inline-block; margin:0 14px 8px 0; color:var(--primary); font-size:14px; }
+  .box { background:#fff; border:1px solid #e3e6f5; border-radius:7px; padding:16px 18px; }
+  .log { background:var(--navy); color:#c9d2ff; border-radius:7px; padding:12px 14px;
+         font-family:'Roboto Mono',monospace; font-size:11.5px; height:150px;
+         overflow-y:auto; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Marketing Cloud Next - Web Tracking Isolation Test</h1>
+  <p class="sub">Purpose: confirm that Data Cloud accepts and stores website engagement
+     from the MCE web connector when the SDK snippet is actually served.
+     This page carries the identical beacon and <span class="mono">wtcp_id</span>
+     used on mce.eu.</p>
+
+  <h2>Client-side checks</h2>
+  <div class="box">
+    <table>
+      <tr><th style="width:34%">Check</th><th style="width:16%">Result</th><th>Detail</th></tr>
+      <tr><td>Beacon script downloaded</td>
+          <td id="s-beacon"><span class="pill p-wait">WAITING</span></td>
+          <td class="mono">cdn.c360a.salesforce.com/beacon/...c360a.min.js</td></tr>
+      <tr><td>SDK cookie written<br><span class="mono">_sfid_*</span></td>
+          <td id="s-cookie"><span class="pill p-wait">WAITING</span></td>
+          <td id="d-cookie" class="mono">polling...</td></tr>
+      <tr><td>Anonymous ID (device ID)</td>
+          <td id="s-anon"><span class="pill p-wait">WAITING</span></td>
+          <td id="d-anon" class="mono">-</td></tr>
+      <tr><td>Page URL sent</td><td><span class="pill p-ok">INFO</span></td>
+          <td id="d-url" class="mono">-</td></tr>
+      <tr><td>Test run reference</td><td><span class="pill p-ok">INFO</span></td>
+          <td id="d-ref" class="mono">-</td></tr>
+    </table>
+  </div>
+  <p style="font-size:12.5px;color:#5a6076;margin-top:10px">
+    Note: the global <span class="mono">SalesforceInteractions</span> is undefined even on
+    correctly working mce.eu pages, so it is deliberately not used as a pass or fail check here.
+    The cookie is the reliable client-side signal that the SDK initialised.</p>
+
+  <h2>Generate engagement events</h2>
+  <div class="box">
+    <p style="margin-top:0">The page load itself should produce a page-view. Use these to
+       produce click events as well, then wait 15 to 30 minutes and query Data Cloud.</p>
+    <button id="btn-a" onclick="logEvent('button-click: Request Programme Info')">Request Programme Info</button>
+    <button id="btn-b" onclick="logEvent('button-click: Download Brochure')">Download Brochure</button>
+    <button id="btn-c" onclick="logEvent('button-click: Subscribe to Newsletter')">Subscribe to Newsletter</button>
+    <div style="margin-top:12px">
+      <a class="tl" href="#programmes" onclick="logEvent('anchor-click: #programmes')">Anchor link one</a>
+      <a class="tl" href="#contact"    onclick="logEvent('anchor-click: #contact')">Anchor link two</a>
+    </div>
+  </div>
+
+  <h2>Local activity log</h2>
+  <div class="log" id="log"></div>
+  <p style="font-size:12.5px;color:#5a6076">
+    This log is local to the browser only. It confirms interaction, not ingestion.
+    Ingestion is confirmed solely by rows appearing in
+    <span class="mono">ssot__WebsiteEngagement__dlm</span>.</p>
+
+  <span id="programmes"></span><span id="contact"></span>
+</div>
+
+<script>
+  var REF = 'MCNTEST-' + new Date().toISOString().replace(/[-:.TZ]/g,'').slice(0,14);
+
+  function log(m){
+    var el = document.getElementById('log');
+    el.textContent += '[' + new Date().toISOString().slice(11,19) + '] ' + m + '\n';
+    el.scrollTop = el.scrollHeight;
+  }
+  function pill(id, state, text){
+    document.getElementById(id).innerHTML =
+      '<span class="pill p-' + state + '">' + text + '</span>';
+  }
+  function mark(what, ok){
+    if (what === 'beacon'){
+      pill('s-beacon', ok ? 'ok' : 'bad', ok ? 'LOADED' : 'FAILED');
+      log('Beacon script ' + (ok ? 'downloaded successfully.' : 'FAILED to download.'));
+    }
+  }
+  function logEvent(m){ log(m); }
+
+  document.getElementById('d-url').textContent = window.location.href;
+  document.getElementById('d-ref').textContent = REF;
+  log('Test page loaded. Reference ' + REF);
+  log('Page URL: ' + window.location.href);
+
+  // Poll for the SDK cookie, which the SDK writes once it initialises.
+  var tries = 0;
+  var poll = setInterval(function(){
+    tries++;
+    var hit = document.cookie.split('; ').filter(function(c){ return c.indexOf('_sfid_') === 0; });
+    if (hit.length){
+      clearInterval(poll);
+      pill('s-cookie','ok','PRESENT');
+      document.getElementById('d-cookie').textContent = hit[0].split('=')[0];
+      var val = decodeURIComponent(hit[0].split('=').slice(1).join('='));
+      var m = val.match(/[0-9a-f]{16,}/i);
+      pill('s-anon','ok','SET');
+      document.getElementById('d-anon').textContent = m ? m[0] : val.slice(0,120);
+      log('SDK cookie detected: ' + hit[0].split('=')[0]);
+      log('SDK initialised. Page-view should now be queued for Data Cloud.');
+    } else if (tries > 30){
+      clearInterval(poll);
+      pill('s-cookie','bad','ABSENT');
+      pill('s-anon','bad','NOT SET');
+      document.getElementById('d-cookie').textContent = 'no _sfid_ cookie after 30 seconds';
+      log('No SDK cookie after 30 seconds. Check the Network tab filtered on "salesforce".');
+    }
+  }, 1000);
+</script>
+</body>
+</html>
